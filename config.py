@@ -1,0 +1,17 @@
+SEED = 456
+BAND = 'r'
+IMAGE_PATH = '../../../data/image_sets_v3'
+HOST_PATH = '../../../data/host_info_r5'
+MAG_PATH = '../../../data/mag_sets_v4'
+OUTPUT_PATH = '../model_with_data/' + BAND + '_band/v13_v2_3c_20231126/'
+MODEL_NAME = '_model_128_3_64_3_nm1_unbalanced_'
+LABEL_PATH = '../model_labels/label_dict.json'
+QUALITY_MODEL_PATH = '../../bogus_classifier/models/bogus_model_without_zscale'
+NO_DIFF = True
+ONLY_COMPLETE = True
+ADD_HOST = True
+NEURONS = [[128,3],[64,3]]
+RES_CNN_GROUP = None
+BATCH_SIZE = 128
+EPOCH = 300
+LEARNING_RATE = 5e-5
