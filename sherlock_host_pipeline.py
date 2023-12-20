@@ -8,7 +8,7 @@ import json
 
 
 
-token = 'XXXXXXXXXXXXXX'
+token = 'XXXXXXXXXXXXXXX'
 
 def get_potential_host(obj, ra, dec, ori_df_path):
     print(obj)
