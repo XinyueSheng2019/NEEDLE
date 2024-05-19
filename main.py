@@ -171,39 +171,4 @@ if __name__ == '__main__':
                                config.BATCH_SIZE, config.EPOCH, config.LEARNING_RATE, 
                                model_name='seed_' + str(config.SEED) + config.MODEL_NAME + args['i'])
     
-    # build_and_train_models(config.BAND, config.IMAGE_PATH, config.HOST_PATH, config.SHERLOCK_PATH, config.OUTPUT_PATH, config.LABEL_PATH, config.QUALITY_MODEL_PATH, 
-    #                            config.NO_DIFF, config.ONLY_COMPLETE, config.ONLY_IMAGE, config.NEURONS,  config.RES_CNN_GROUP,  
-    #                            config.BATCH_SIZE, config.EPOCH, config.LEARNING_RATE, 
-    #                            model_name='seed_' + str(config.SEED) + '_custom_testset_model_bs64_'+args['i'], custom_test_path= config.OUTPUT_PATH + '/custom_testset_model/testset_obj_complete_easy_bs64_cut.json')
    
-   
-   # band = 'r'
-    # image_path = '../../../data/image_sets_v3'
-    # host_path = '../../../data/host_info_r5'
-    # sherlock_path = '../../../data/ztf_sherlock_matches/ztf_sherlock_host.csv'
-    # output_path = '../model_with_data/' + band + '_band/sher_mags_peak_set_20230619/'
-    # label_path = '../model_labels/label_dict_equal_test.json'
-    # quality_model_path = '../../bogus_classifier/models/bogus_model_without_zscale'
-    # model_param = {}
-    # ztf_id = 'ZTF21aanxhjv'
-    # disdate = '2021-03-01'
-    # transient_type = 'TDE'
-    # size = 1
-    # duration = 10
-    # outdir = 'test/image_test'
-    # magdir = 'test/mag_test'
-    # hostdir = 'test/host_test'
-
-    # ztf_id = 'ZTF22abywkjn'
-    # disdate = '2022-12-19'
-    # transient_type = 'unknown'
-    # label_path = '../model_labels/label_dict.json'
-    # BClassifier_path = '../../bogus_classifier/models/bogus_model_without_zscale'
-    # TSClassifier_path = '../model_with_data/r_band/peak_set_check_bogus_20220131'
-
-    
-    # add_single_transient(ztf_id, disdate, transient_type, size, duration, outdir, magdir, hostdir)
-
-    # predict_new_transient(ztf_id, disdate, label_path, BClassifier_path, TSClassifier_path, predict_path = 'new_predicts/')
-    # predict_test_transient(ztf_id, transient_type, label_path, TSClassifier_path, predict_path = 'test_predicts')
-

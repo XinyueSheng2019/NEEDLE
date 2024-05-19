@@ -31,26 +31,3 @@ def get_json(ztf_id, path):
 		outfile.write(json_object)	
 		outfile.close()
 
-	# return c
-
-# if __name__ == '__main__':
-
-
-# 	image_path = '/Users/xinyuesheng/Documents/astro_projects/data/image_sets_v3'
-# 	img_files = os.listdir(image_path)
-# 	img_files.remove('.DS_Store')
-# 	img_files.remove('readme.md')
-	
-# 	path = '/Users/xinyuesheng/Documents/astro_projects/data/mag_sets_v4'
-# 	if not os.path.exists(path):
-# 		os.makedirs(path)
-# 	for obj in img_files:
-# 		print(obj)
-# 		get_json(obj, path)
-	
-
-
-
-
-# https://lasair-ztf.lsst.ac.uk/api/objects/?objectIds=ZTF22aadghqe&token=f7b4b64c53168512a4bcba06827c6c0015e9c9f6&format=json
-

@@ -641,25 +641,3 @@ def gr_band_peak_db(image_path, host_path, mag_path, output_path, label_dict, no
 
 
 
-if __name__ == '__main__':
-    band = 'r'
-    image_path = '/Users/xinyuesheng/Documents/astro_projects/data/image_sets_v3'
-    host_path = '/Users/xinyuesheng/Documents/astro_projects/data/host_info_r5'
-    output_path = '../model_with_data/r_band/all_set_20231201/'
-    if not os.path.exists(output_path):
-        os.makedirs(output_path)
-
-    label_path = '/Users/xinyuesheng/Documents/astro_projects/scripts/classifier_v2/model_labels/label_dict.json'
-    label_dict = open(label_path,'r')
-    label_dict = json.loads(label_dict.read())
-
-    mag_path = '/Users/xinyuesheng/Documents/astro_projects/data/mag_sets_v4'
-
-    BClassifier = models.load_model('/Users/xinyuesheng/Documents/astro_projects/scripts/bogus_classifier/models/bogus_model_without_zscale')
-
-    single_band_all_db(image_path, host_path, mag_path, output_path, label_dict["classify"], band = band, no_diff= True, BClassifier = BClassifier)
-
-
-    # single_band_peak_db(image_path, host_path, mag_path, output_path, label_dict["classify"], 'r', True, True, BClassifier)
-    # gr_band_peak_db(image_path, host_path, output_path, label_dict["classify"], no_diff = True)
-

@@ -461,37 +461,4 @@ def check_image_shape(filename, ra, dec):
 
 
 
-if __name__ == '__main__':
-    '''
-    User could call this script, or just modify the '__main__' function to download objects they want.
-    They need to provide ZTF magnitude json file, or ZTF object table with coordinates.
-    '''
-
-    
-    size = 1
-    duration = 100
-
-    # outdir = 'TDE_demo_set/'
-    # if os.path.isdir(outdir) == False:
-    #     os.mkdir(outdir)
-    # magdir = 'TDE_mag/'
-    # if os.path.isdir(magdir) == False:
-    #     os.mkdir(magdir)
-    
-    # obj_table = '../../data/TDE_20221017.csv'
-    # obj_table = pd.read_csv(obj_table)
-    # read_table(obj_table, size, duration, outdir, magdir, parrallel = True)
-
-    ztf_id = 'ZTF22abegjtx'
-    type = 'TDE'
-    disdate = 2458922.5
-    outdir = 'test/'
-    if os.path.isdir(outdir) == False:
-        os.mkdir(outdir)
-    magdir = 'mag_test/'
-    if os.path.isdir(magdir) == False:
-        os.mkdir(magdir)
-    collect_image(ztf_id, disdate, type, size, duration, outdir, magdir)
-
-
 

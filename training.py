@@ -206,26 +206,4 @@ def plot_acc(khistory, save_path):
 
 
 
-################### BUILD A MODEL #####################
-
-# if __name__ == '__main__':
-
-
-#     label_path = 'binary_label_dict.json'
-#     label_dict = open(label_path,'r')
-#     label_dict = json.loads(label_dict.read())
-
-    # hash_path = 'hash_table.json'
-    # hash_table = open(hash_path, 'r')
-    # hash_table = json.loads(hash_table.read())
-
-    # filepath = 'data/r_peak_set_check_bogus_20220118.hdf5'
-    # model_name = 'c3_0118_r_without_bogus_TDE_SN'
-
-    
-    # train_imageset, train_metaset, train_labels, test_imageset, test_metaset, test_labels = preprocessing(filepath, label_dict, hash_table)
-   
-
-    # train(train_imageset, train_metaset, train_labels, test_imageset, test_metaset, test_labels, label_dict["label"], batch_size = 32, epoch = 300, learning_rate = 8e-5, k_fold = False, n_splits = 3, model_name = model_name)
-
 

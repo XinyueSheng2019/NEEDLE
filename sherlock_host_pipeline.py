@@ -52,16 +52,5 @@ def get_multiple_hosts(table, ori_df_path):
 
 
 
-
-if __name__ == '__main__':
-    full_obj_list = '../../../data/full_obj_info.csv'
-    full_objs = pd.read_csv(full_obj_list)
-    sherlock_csv = '../../../data/ztf_sherlock_matches/ztf_sherlock_host.csv'
-    get_multiple_hosts(full_objs, sherlock_csv)
-
-
-
-    # get_potential_host(obj = 'ZTF20aauwjla', ra = 16.851866, dec = 34.53307, ori_df_path = sherlock_csv)
-
-    
+ 
     
