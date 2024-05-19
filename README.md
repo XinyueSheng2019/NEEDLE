@@ -6,10 +6,10 @@ The NEEDLE classifier is a specialized tool designed for identifying rare astron
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![Version](https://img.shields.io/github/v/release/XinyueSheng2019/NEEDLE.svg)
 ![GitHub issues](https://img.shields.io/github/issues/XinyueSheng2019/NEEDLE.svg)
-![GitHub forks](https://img.shields.io/github/forks/XinyueSheng2019/NEEDLE.svg)
-![GitHub stars](https://img.shields.io/github/stars/XinyueSheng2019/NEEDLE.svg)
 ![GitHub last commit](https://img.shields.io/github/last-commit/XinyueSheng2019/NEEDLE.svg)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
+![GitHub forks](https://img.shields.io/github/forks/XinyueSheng2019/NEEDLE.svg)
+![GitHub stars](https://img.shields.io/github/stars/XinyueSheng2019/NEEDLE.svg)
 
 
 ## Key Features
