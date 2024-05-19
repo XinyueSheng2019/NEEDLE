@@ -2,10 +2,9 @@
 
 The NEEDLE classifier is a specialized tool designed for identifying rare astronomical transients from real-time alerts, particularly Superluminous Supernovae (SLSNe) and Tidal Disruption Events (TDEs). Developed by Xinyue Sheng and Matt Nicholl, the NEEDLE classifier uses machine learning models to enhance the detection and classification of these rare events.
 
-![Build Status](https://img.shields.io/travis/com/XinyueSheng2019/NEEDLE.svg)
-![Coverage Status](https://img.shields.io/codecov/c/github/XinyueSheng2019/NEEDLE.svg)
+
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
-![Version](https://img.shields.io/github/v/release/XinyueSheng2019/NEEDLE)
+![Version](https://img.shields.io/github/v/release/XinyueSheng2019/NEEDLE/tags)
 ![GitHub issues](https://img.shields.io/github/issues/XinyueSheng2019/NEEDLE.svg)
 ![GitHub forks](https://img.shields.io/github/forks/XinyueSheng2019/NEEDLE.svg)
 ![GitHub stars](https://img.shields.io/github/stars/XinyueSheng2019/NEEDLE.svg)
