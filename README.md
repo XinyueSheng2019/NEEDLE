@@ -2,14 +2,14 @@
 
 The NEEDLE classifier is a specialized tool designed for identifying rare astronomical transients from real-time alerts, particularly Superluminous Supernovae (SLSNe) and Tidal Disruption Events (TDEs). Developed by Xinyue Sheng and Matt Nicholl, the NEEDLE classifier uses machine learning models to enhance the detection and classification of these rare events.
 
-![Build Status](https://img.shields.io/travis/com/owner/repo.svg)
-![Coverage Status](https://img.shields.io/codecov/c/github/owner/repo.svg)
+![Build Status](https://img.shields.io/travis/com/XinyueSheng2019/NEEDLE.svg)
+![Coverage Status](https://img.shields.io/codecov/c/github/XinyueSheng2019/NEEDLE.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
-![Version](https://img.shields.io/github/v/release/owner/repo)
-![GitHub issues](https://img.shields.io/github/issues/owner/repo.svg)
-![GitHub forks](https://img.shields.io/github/forks/owner/repo.svg)
-![GitHub stars](https://img.shields.io/github/stars/owner/repo.svg)
-![GitHub last commit](https://img.shields.io/github/last-commit/owner/repo.svg)
+![Version](https://img.shields.io/github/v/release/XinyueSheng2019/NEEDLE)
+![GitHub issues](https://img.shields.io/github/issues/XinyueSheng2019/NEEDLE.svg)
+![GitHub forks](https://img.shields.io/github/forks/XinyueSheng2019/NEEDLE.svg)
+![GitHub stars](https://img.shields.io/github/stars/XinyueSheng2019/NEEDLE.svg)
+![GitHub last commit](https://img.shields.io/github/last-commit/XinyueSheng2019/NEEDLE.svg)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
 
 
