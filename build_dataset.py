@@ -1,19 +1,13 @@
-#! ~/anaconda3/envs/astro_py8/bin/python python3
-# from ctypes.wintypes import tagMSG
-# from logging import raiseExceptions
-# from multiprocessing import managers
-from tkinter.tix import COLUMN
+
 import pandas as pd
 import numpy as np
 import json
 import os
 import re
 
-import tensorflow as tf
 import absl.logging
 absl.logging.set_verbosity(absl.logging.ERROR)
 
-from tensorflow.keras import models
 from astropy.io import fits
 from astropy import visualization
 from astropy.nddata import Cutout2D
