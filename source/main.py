@@ -19,6 +19,7 @@ from ztf_image_pipeline import collect_image
 from sherlock_host_pipeline import get_potential_host
 from host_meta_pipeline import PS1catalog_host
 from obj_meta_pipeline import collect_meta
+from transient_model import EM_QualityClassifier
 import sys
 sys.path.append('../')
 import config as config
@@ -28,9 +29,10 @@ def build_and_train_models(band, image_path, host_path, mag_path, output_path, l
                             res_cnn_group=None, batch_size=32, epoch=300, learning_rate=5e-5, model_name=None, 
                             custom_test_path=None):
     label_dict = json.load(open(label_path, 'r'))
-    if not os.path.exists(output_path):
-        os.makedirs(output_path)
-        BClassifier = models.load_model(quality_model_path)
+    if not os.path.exists(os.path.join(output_path, 'data.hdf5')):
+        os.makedirs(output_path, exist_ok=True)
+        BClassifier = EM_QualityClassifier(model_path=quality_model_path)
+
         if band != 'gr':
             single_band_peak_db(image_path, host_path, mag_path, output_path, label_dict["classify"], band=band,
                                 no_diff=no_diff, only_complete=only_complete, add_host=add_host,
@@ -53,6 +55,7 @@ def build_and_train_models(band, image_path, host_path, mag_path, output_path, l
     train(train_imageset, train_metaset, train_labels, test_imageset, test_metaset, test_labels, label_dict["label"],
           neurons=neurons, batch_size=batch_size, epochs=epoch,
           learning_rate=learning_rate, model_name=model_path)
+
 
 def add_single_transient(ztf_id, disdate, transient_type, size, duration, outdir, magdir, hostdir):
     print(f'---------collect {ztf_id} image data now---------\n')

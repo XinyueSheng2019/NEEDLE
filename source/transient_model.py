@@ -19,6 +19,23 @@ from tensorflow.keras import layers, backend as K
 from custom_layers import ResNetBlock, DataAugmentation
 from sklearn.metrics import confusion_matrix
 import seaborn as sns
+from tensorflow.keras import models
+
+class EM_QualityClassifier():
+    def __init__(self, model_path, iter = 5):
+        self.models = []
+        for i in np.arange(iter):
+            bcmodel = models.load_model(os.path.join(model_path, f'quality_model_20140524_{i}'))
+            self.models.append(bcmodel)
+    def predict(self, img, threshold = 0.75):
+        img = img.reshape(1, 60, 60, 1)
+        results = []
+        for m in self.models:
+            results.append(m.predict(img)[0][1])
+        result = np.mean(results, axis = 0)
+        return result >= threshold
+    
+
 
 class TransientClassifier(tf.keras.Model):
     """
@@ -81,7 +98,7 @@ class TransientClassifier(tf.keras.Model):
     def call(self, inputs):
         if not self.meta_only:
             x = self.data_augmentation(inputs['image_input'])
-            
+
             if self.Resnet_op:
                 x = self.res_block(x)
             else:
@@ -136,7 +153,6 @@ class TransientClassifier(tf.keras.Model):
         plt.savefig(os.path.join(save_path, f'cm_{suffix}_{current_time}.png'))
 
         return cm
-
 
 class LossHistory(tf.keras.callbacks.Callback):
     """

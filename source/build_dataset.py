@@ -25,13 +25,11 @@ def check_shape(img):
     """
     return img.shape == (60, 60) and not np.all(np.isnan(img))
 
-def check_bogus(model, img, threshold=0.5):
+def check_quality(model, img, threshold=0.5):
     """
-    Check if the image is bogus based on the model's prediction.
+    Check if the image is good quality based on the model's prediction.
     """
-    img = img.reshape(1, 60, 60, 1)
-    result = model.predict(img)[0][1]
-    return result >= threshold
+    return model.predict(img, threshold)
 
 def cutout_img(data, header, ra, dec, size=60):
     """
@@ -266,7 +264,7 @@ def get_obs_image(obj_path, filefracday, no_diff, band, BClassifier):
     - filefracday: str, identifier for the file fraction day
     - no_diff: bool, whether to include difference images
     - band: str, filter band
-    - BClassifier: model, bogus classifier
+    - BClassifier: model, quality classifier
 
     Returns:
     - ndarray, combined data array or None
@@ -275,12 +273,28 @@ def get_obs_image(obj_path, filefracday, no_diff, band, BClassifier):
     diff_re = re.compile('diff')
     ref_re = re.compile('ref')
 
+    def check_refs(ref_imgs):
+        '''
+        if one obj has multiple ref_imgs, and top one is bad, the other is good, we could still use it.
+        '''
+        final_img = ref_imgs[0]
+        if len(ref_imgs) > 1:
+            for fi in ref_imgs:
+                data = fits.getdata(f"{obj_path}/{band}/{fi}")
+                if not np.isnan(np.ravel(data)).all():
+                    final_img = fi
+                    break
+        return final_img
+          
+
     obs_listdir = os.listdir(f"{obj_path}/{band}/{filefracday}")
     sci_img = list(filter(sci_re.match, obs_listdir))[0]
     diff_img = list(filter(diff_re.match, obs_listdir))[0]
     band_path = f"{obj_path}/{band}"
     band_listdir = os.listdir(band_path)
-    ref_img = list(filter(ref_re.match, band_listdir))[0]
+    ref_imgs = list(filter(ref_re.match, band_listdir))
+    ref_img = check_refs(ref_imgs)
+
 
     sci_data = get_shaped_image_simple(fits.getdata(f"{obj_path}/{band}/{filefracday}/{sci_img}"))
     diff_data = get_shaped_image_simple(fits.getdata(f"{obj_path}/{band}/{filefracday}/{diff_img}"))
@@ -290,14 +304,14 @@ def get_obs_image(obj_path, filefracday, no_diff, band, BClassifier):
         if check_shape(sci_data) and check_shape(ref_data):
             sci_data = img_reshape(image_normal(zscale(sci_data)))
             ref_data = img_reshape(image_normal(zscale(ref_data)))
-            if check_bogus(BClassifier, sci_data) and check_bogus(BClassifier, ref_data):
+            if check_quality(BClassifier, sci_data) and check_quality(BClassifier, ref_data):
                 return np.concatenate((sci_data, ref_data), axis=-1)
     else:
         if check_shape(sci_data) and check_shape(diff_data) and check_shape(ref_data):
             sci_data = img_reshape(image_normal(zscale(sci_data)))
             ref_data = img_reshape(image_normal(zscale(ref_data)))
             diff_data = img_reshape(image_normal(zscale(diff_data)))
-            if check_bogus(BClassifier, sci_data) and check_bogus(BClassifier, ref_data) and check_bogus(BClassifier, diff_data):
+            if check_quality(BClassifier, sci_data) and check_quality(BClassifier, ref_data) and check_quality(BClassifier, diff_data):
                 comb_data = np.concatenate((sci_data, ref_data, diff_data), axis=-1)
                 return comb_data
     return None
@@ -312,7 +326,7 @@ def get_single_transient_peak(ztf_id, image_path, host_path, band='r', no_diff=T
     - host_path: str, path to the host data
     - band: str, filter band ('r' or 'g')
     - no_diff: bool, whether to include difference images
-    - BClassifier: model, bogus classifier
+    - BClassifier: model, quality classifier
 
     Returns:
     - tuple: combined image data and metadata arrays
@@ -321,10 +335,6 @@ def get_single_transient_peak(ztf_id, image_path, host_path, band='r', no_diff=T
         raise ValueError('Invalid band! Choose "r" or "g".')
 
     band_num = '2' if band == 'r' else '1'
-
-    sci_re = re.compile('sci')
-    diff_re = re.compile('diff')
-    ref_re = re.compile('ref')
 
     obj_path = os.path.join(image_path, ztf_id)
 
@@ -373,7 +383,7 @@ def multi_worker_task(obj, f, image_path, host_path, mag_path, BClassifier, labe
     - image_path: str, path to the image data
     - host_path: str, path to the host data
     - mag_path: str, path to the magnitude data
-    - BClassifier: model, bogus classifier
+    - BClassifier: model, quality classifier
     - label_dict: dict, label dictionary
     - mp_meta_set: list, multiprocessing shared list for metadata
     - mp_image_set: list, multiprocessing shared list for images
@@ -427,7 +437,7 @@ def serial_worker_task(obj, f, image_path, host_path, mag_path, BClassifier, lab
     - image_path: str, path to the image data
     - host_path: str, path to the host data
     - mag_path: str, path to the magnitude data
-    - BClassifier: model, bogus classifier
+    - BClassifier: model, quality classifier
     - label_dict: dict, label dictionary
 
     Returns:
@@ -488,7 +498,7 @@ def single_band_all_db(image_path, host_path, mag_path, output_path, label_dict,
     - band: str, filter band ('r' or 'g')
     - no_diff: bool, whether to include difference images
     - only_complete: bool, whether to only include complete data
-    - BClassifier: model, bogus classifier
+    - BClassifier: model, quality classifier
     - parallel: bool, whether to use parallel processing
 
     Returns:
@@ -567,7 +577,7 @@ def single_band_peak_db(image_path, host_path, mag_path, output_path, label_dict
     - no_diff: bool, whether to include difference images
     - only_complete: bool, whether to include only complete data
     - add_host: bool, whether to add host metadata
-    - BClassifier: model, bogus classifier
+    - BClassifier: model, quality classifier
 
     Returns:
     - None
@@ -596,9 +606,9 @@ def single_band_peak_db(image_path, host_path, mag_path, output_path, label_dict
         with open(os.path.join(obj_path, 'image_meta.json'), 'r') as mj:
             meta = json.load(mj)
         
-        candids = mag_wg["candidates_with_image"]['f' + f]
+        candids = mag_wg["candidates_with_image"][f'f{f}']
 
-        if not candids or meta['f' + f]["obj_with_no_ref"]:
+        if not candids or meta[f'f{f}']["obj_with_no_ref"]:
             # Skip if there are no candidates or the object doesn't have a reference image
             continue
 
@@ -606,7 +616,7 @@ def single_band_peak_db(image_path, host_path, mag_path, output_path, label_dict
         idx = np.argmin(mags[:, 0])
         filefracday = mags[idx][1]
         
-        if filefracday not in meta['f' + f]["obs_with_no_diff"]:
+        if filefracday not in meta[f'f{f}']["obs_with_no_diff"]:
             comb_data = get_obs_image(obj_path, filefracday, no_diff, f, BClassifier)
             if comb_data is not None:
                 obj_meta = add_obj_meta(obj, image_path, filefracday, add_host, recent_values=False)
@@ -646,7 +656,7 @@ def both_band_peak_db(image_path, host_path, mag_path, output_path, label_dict, 
     - no_diff: bool, whether to include difference images
     - add_host: bool, whether to add host metadata
     - only_complete: bool, whether to include only complete data
-    - BClassifier: model, bogus classifier
+    - BClassifier: model, quality classifier
     Returns:
     - None
     '''
@@ -677,14 +687,14 @@ def both_band_peak_db(image_path, host_path, mag_path, output_path, label_dict, 
         flag = True  # only store data when both bands are available
 
         for f in ['1', '2']:
-            candids = mag_wg["candidates_with_image"]['f' + f]
+            candids = mag_wg["candidates_with_image"][f'f{f}']
 
-            if len(candids) >= 1 and not meta['f' + f]["obj_with_no_ref"]:
+            if len(candids) >= 1 and not meta[f'f{f}']["obj_with_no_ref"]:
                 mags = np.array([[m['magpsf'], m["filefracday"]] for m in candids])
                 idx = np.argmin(mags[:, 0])
                 filefracday = mags[idx][1]
 
-                if filefracday not in meta['f' + f]["obs_with_no_diff"]:
+                if filefracday not in meta[f'f{f}']["obs_with_no_diff"]:
                     comb_data = get_obs_image(obj_path, filefracday, no_diff, f, BClassifier)
                     if comb_data is not None:
                         obj_meta = add_obj_meta(obj, image_path, filefracday, add_host, recent_values=False)
@@ -741,7 +751,7 @@ def test_file():
 
     mag_path = '/Users/xinyuesheng/Documents/astro_projects/data/mag_sets_v4'
 
-    BClassifier = models.load_model('bogus_model_without_zscale')
+    # BClassifier = models.load_model('quality_model_without_zscale')
 
     single_band_peak_db(image_path, host_path, mag_path, output_path, label_dict["classify"], band = band, no_diff = True, only_complete = True, add_host = True,  BClassifier = BClassifier)
 

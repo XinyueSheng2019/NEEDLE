@@ -1,8 +1,8 @@
 import os
 import sys
-sys.path.append('../')
-import tensorflow as tf
+sys.path.append('..')
 import config
+import tensorflow as tf
 tf.random.set_seed(config.SEED)
 tf.keras.utils.set_random_seed(config.SEED)
 
