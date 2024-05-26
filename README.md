@@ -23,9 +23,9 @@ The NEEDLE classifier is a specialized tool designed for identifying rare astron
 
 ## Dataset
 
-The dataset is in HDF5 format and is accessible via [this link on Kaggle](https://www.kaggle.com/datasets/sherrysheng97/needle-lasair-dataset). Download `data.hdf5` and `hash_table.json` and put them into the folder 'needle_th_models'.
+The dataset is in HDF5 format and is accessible via [this link on Kaggle](https://www.kaggle.com/datasets/sherrysheng97/needle-repo-dataset). Download `data.hdf5` and `hash_table.json` and put them into the folder 'needle_th_models'.
 ```sh
-   kaggle datasets download -d sherrysheng97/needle-lasair-dataset
+   kaggle datasets download -d sherrysheng97/needle-repo-dataset
 ```
 ## Contact Information
 
@@ -37,6 +37,12 @@ To begin using the NEEDLE classifier, follow these steps:
 
 1. **Download the Dataset**: Download the HDF5 dataset.
 2. **Set Virtual Environment**: Set a conda envrionment, and use `requirements.txt` to download all needed packages.
+```sh
+   conda create --name needle_env python=3.9
+   conda activate needle_env
+   pip install -r requirements.txt
+
+```
 2. **Set Up Config.py**: Edit the `Config.py` file to include the file paths for your data and models. Note the data for IMAGE_PATH, MAG_PATH, HOST_PATH are not given, please contact the author if desired.
 3. **Re-train Models**: If desired, use the provided dataset to re-train the models on your local machine. Simply use Makefile to train 10 new models.
 ```sh
