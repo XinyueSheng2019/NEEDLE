@@ -4,17 +4,17 @@
 
 # DATA AND MODEL PATHS
 BAND = 'r'
-IMAGE_PATH = '../data/image_sets_v3'
-HOST_PATH = '../data/host_info_r5'
-MAG_PATH = '../data/mag_sets_v4'
-OUTPUT_PATH = '../model_with_data/' + BAND + '_band/test_main/'
+IMAGE_PATH = '/Users/xinyuesheng/Documents/astro_projects/data/image_sets_v3'
+HOST_PATH = '/Users/xinyuesheng/Documents/astro_projects/data/host_info_r5'
+MAG_PATH = '/Users/xinyuesheng/Documents/astro_projects/data/mag_sets_v4'
+OUTPUT_PATH = 'needle_th_models'
 MODEL_NAME = '_model_'
-LABEL_PATH = '../model_labels/label_dict_equal_test.json'
+LABEL_PATH = 'label_dict_equal_test.json'
 CUSTOM_TEST_PATH = None
 
 # MODEL INPUTS
 SEED = 456
-QUALITY_MODEL_PATH = 'bogus_model_without_zscale'
+QUALITY_MODEL_PATH = '../quality_models'
 NO_DIFF = True
 ONLY_COMPLETE = True
 ADD_HOST = True
