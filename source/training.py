@@ -176,11 +176,8 @@ def train(train_images, train_meta, train_labels, test_images, test_meta, test_l
     os.makedirs(model_path, exist_ok=True)
     TCModel.save(model_path, save_format='tf')
 
-    cm = TCModel.plot_CM(test_images, test_meta, test_labels, save_path=model_path)
-    with open(os.path.join(model_path, 'results_cm.csv'), 'a+') as f:
-        writer = csv.writer(f)
-        writer.writerow(cm)
-
+    TCModel.plot_CM(test_images, test_meta, test_labels, save_path=model_path)
+    
     history.save_to_json(os.path.join(model_path, 'loss_records.json'))
 
 def plot_loss(history_list, save_path):

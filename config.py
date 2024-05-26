@@ -4,10 +4,10 @@
 
 # DATA AND MODEL PATHS
 BAND = 'r'
-IMAGE_PATH = '/Users/xinyuesheng/Documents/astro_projects/data/image_sets_v3'
-HOST_PATH = '/Users/xinyuesheng/Documents/astro_projects/data/host_info_r5'
-MAG_PATH = '/Users/xinyuesheng/Documents/astro_projects/data/mag_sets_v4'
-OUTPUT_PATH = 'needle_th_models'
+IMAGE_PATH = 'data/image_sets_v3'
+HOST_PATH = 'data/host_info_r5'
+MAG_PATH = 'data/mag_sets_v4'
+OUTPUT_PATH = '../needle_th_models'
 MODEL_NAME = '_model_'
 LABEL_PATH = 'label_dict_equal_test.json'
 CUSTOM_TEST_PATH = None
@@ -20,7 +20,7 @@ ONLY_COMPLETE = True
 ADD_HOST = True
 ONLY_HOSTED_OBJ = False
 META_ONLY = False
-OBJECT_WITH_HOST_PATH = None #'../model_with_data/r_band/v12_v2_3c_20231126/hash_table.json'
+OBJECT_WITH_HOST_PATH = None 
 
 # MODEL ARCHITECTURE
 NEURONS = [[64,3],[128,3]]
