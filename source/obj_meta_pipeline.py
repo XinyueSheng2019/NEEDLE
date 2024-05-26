@@ -30,37 +30,25 @@ import json
 import os
 import re
 
-
-
-
         
-
 def get_host_mag(host_path, obj, band):
-    if os.path.exists(host_path+'/'+obj+'.csv'):
-        host = pd.read_csv(host_path+'/'+obj+'.csv')
-        row = host.iloc[0]
+    filename = f"{obj}.csv"
+    file_path = os.path.join(host_path, filename)
+    if os.path.exists(file_path):
+        host = pd.read_csv(file_path)
         if band == 'f1':
-            return row['gAp']
-        else:
-            return row['rAp']
-    else:
-        return np.nan
+            return host.at[0, 'gAp'] if 'gAp' in host.columns else np.nan
+        elif band == 'f2':
+            return host.at[0, 'rAp'] if 'rAp' in host.columns else np.nan
+    return np.nan
+
     
 def collect_meta(obj, objs_path, host_path):
-    '''
-    
-    meta_df = pd.DataFrame(columns = ['disc_mjd', 'disc_mjd_r', 'disc_mag_r', 
-                                    'ps_r_mag' , 'ps_r_magerr', 
-                                    'candi_id', 'candi_mjd', 'candi_mag', 'candi_magerr',  '
-                                    'ps_delta_mag', 'delta_t', 'prev_delta_t', 'prev_delta_mag'])
-
-    '''
     
     meta_path = os.path.join(objs_path, obj + '/mag_with_img.json')
     # get discovery date and candidate with mag data
     j = open(meta_path, 'r')
     image_meta = json.loads(j.read())
-    # disc_mjd = image_meta['disdate'] - 2400000.5
 
     candi_file_num = []
     candi_mjd_l = []
@@ -149,20 +137,3 @@ def collect_meta(obj, objs_path, host_path):
 
     df.to_csv(objs_path + '/'+obj + '/obj_meta4ML.csv')
     
-
-
-# if __name__ == '__main__':
-
-#     obj_re = re.compile('ZTF')
-
-#     objs_path = '/Users/xinyuesheng/Documents/astro_projects/data/image_sets_v3'
-#     host_path = '/Users/xinyuesheng/Documents/astro_projects/data/host_info_r5'
-#     # objs_path = 'TDE_image_set'
-#     # host_path = 'TDE_host_r5'
-
-#     file_names = os.listdir(objs_path) 
-#     file_names = list(filter(obj_re.match, file_names))
-#     for obj in file_names:
-#         collect_meta(obj, objs_path, host_path)
-
-

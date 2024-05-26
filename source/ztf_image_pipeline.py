@@ -5,29 +5,22 @@ Build a .JSON meta file for each object.
 '''
 
 import os
-import sys
 import re
 import subprocess
 import errno
-import argparse
 import csv
 import json
-from datetime import datetime as dt
-import multiprocessing
-from multiprocessing import Pool,cpu_count
+
+from multiprocessing import Pool
 from itertools import repeat
 import pandas as pd 
 import numpy as np 
 
-import astropy
 from astropy.time import Time
 from astropy.io import fits
 from astropy.nddata import Cutout2D
 from astropy.wcs.wcs import WCS
-from astropy.coordinates import SkyCoord
-import matplotlib.pyplot as plt
 from astropy.utils.data import get_pkg_data_filename
-from astropy.modeling.rotations import Rotation2D
 from ztf_mag_pipeline import get_json
 
 
@@ -50,27 +43,6 @@ def convert2jd(obs_date):
 
 def convert_ztf(ztf_name, obj_file):
     return obj_file[(obj_file.ZTFID == ztf_name)]['n_RA'], obj_file[(obj_file.ZTFID == ztf_name)]['n_Dec']
-
-
-# def read_multi_objs(filepath, outdir, size = 1, duration = 100):  # multithreading available
-#     # return ztf_name, pos, discover date.
-#     obj_table = pd.read_csv(filepath)
-
-#     outdir = os.getcwd() + '/' + outdir
-#     path_safe(outdir)
-
-#     print(f'starting computations on {cpu_count()} cores')
-
-#     obj_table_list = [obj_table.iloc[[i]] for i in np.arange(len(obj_table))]
-
-#     with Pool() as pool:
-#         pool.starmap(collect_image, zip(repeat(size), repeat(duration), obj_table_list, repeat(outdir)))
-    
-
-    # single core: 
-
-    # for i in np.arange(len(obj_table)):
-    #     collect_image(size, duration, obj_table.iloc[[i]], outdir)
 
 
 def test_valid_and_flip(path, rotation = False):
@@ -424,19 +396,11 @@ def collect_image(ztf_id, disdate, type, size, duration, outdir, magdir):
         return 0
     
 
-
-
-
-
-
-
 def check_image_shape(filename, ra, dec):
-    # add bogus label
+
     if filename[-2:]!='fz':
         f = fits.open(filename,ignore_missing_end=True)  # open a FITS file
         hdr = f[0].header 
-        # if np.std(f[0].data) > 1000:
-        #     return 0
         if hdr['NAXIS1'] == 61 or hdr['NAXIS2'] == 61:
             f[0].data = cutout_img(f[0].data, hdr, ra, dec)
             f[0].writeto(filename, overwrite=True)
@@ -446,8 +410,6 @@ def check_image_shape(filename, ra, dec):
         f = fits.open(filename,ignore_missing_end=True)
         f.verify('fix')
         hdr = f[1].header
-        # if np.std(f[1].data) > 1000:
-        #     return 0
         if hdr['NAXIS1'] == 61 or hdr['NAXIS2'] == 61:
             f[1].data = cutout_img(f[1].data, hdr, ra, dec)
             f[1].writeto(filename, overwrite=True)

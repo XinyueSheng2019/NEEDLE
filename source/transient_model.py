@@ -1,31 +1,17 @@
-# set the seed
-import tensorflow as tf
-from numpy.random import seed
 
 import config
+# set the seed
 seed(config.SEED)
 tf.random.set_seed(config.SEED)
 tf.keras.utils.set_random_seed(config.SEED)
-# import random
-# random.seed(config.SEED)
 
 import os
-# os.environ['PYTHONHASHSEED']=str(config.SEED)
-
-from tensorflow.keras import backend as K
-# config_s = tf.ConfigProto(intra_op_parallelism_threads=1,inter_op_parallelism_threads=1)
-# tf.set_random_seed(sd)
-# sess = tf.Session(graph=tf.get_default_graph(), config=config_s)
-# K.set_session(sess)
-
-
-from tensorflow.keras import layers
-
-from custom_layers import ResNetBlock, DataAugmentation
-
-import pandas as pd 
 import numpy as np 
-
+from numpy.random import seed
+import tensorflow as tf
+from tensorflow.keras import backend as K
+from tensorflow.keras import layers
+from custom_layers import ResNetBlock, DataAugmentation
 import matplotlib.pyplot as plt
 from datetime import datetime
 
@@ -97,7 +83,6 @@ class TransientClassifier(tf.keras.Model):
                 X = cy[1](X)
 
         X = self.flatten(X)
-        # Y = self.normalization(inputs['meta_input'])
         Y = self.dense_m1(inputs['meta_input'])
         Y = self.dense_m2(Y)
         Z = self.concatenate([X, Y])
@@ -119,7 +104,6 @@ class TransientClassifier(tf.keras.Model):
         p_cm = []
         for i in cm:
             p_cm.append(np.round(i/np.sum(i),3))
-        # cm = p_cm
 
         ## Get Class Labels
         labels = self.label_dict.keys()
@@ -142,13 +126,9 @@ class TransientClassifier(tf.keras.Model):
         plt.yticks(rotation=0)
 
         current_time = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
-        # plt.title('Confusion Matrix ', fontsize=20)
-        
         if not os.path.exists(save_path):
             os.makedirs(save_path)
-        
         plt.savefig(save_path+'/cm_'+ current_time +'.png')
-
         return cm
 
 
@@ -167,7 +147,6 @@ class LossHistory(tf.keras.callbacks.Callback):
         self.batch_losses = []
         self.batch_accuracy = []
 
-      
 
     def on_epoch_end(self, batch, logs={}):
         self.epoch_loss.append(logs.get('loss'))
