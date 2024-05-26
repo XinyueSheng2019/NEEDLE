@@ -1,7 +1,5 @@
 ############### CONFIG FILE FOR NEEDLE ############### 
 
-
-
 # DATA AND MODEL PATHS
 BAND = 'r'
 IMAGE_PATH = 'data/image_sets_v3'

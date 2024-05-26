@@ -15,15 +15,18 @@ The NEEDLE classifier is a specialized tool designed for identifying rare astron
 
 ## Key Features
 - **Architecture**: ![NEEDLE model](cnn_model.png)
-- **Open Source**: The dataset `data.hdf5` is available for re-training the models.
-- **Lasair Version**: Requires an API token, which can be obtained by contacting the Lasair team.
-- **Well-trained Models**: Includes 10 models of NEEDLE-TH with associated datasets. A Lasair version of the well-trained model (without dataset) will be released soon.
+- **Open Source**: The dataset is available for re-training the models.
+- **Well-trained Models**: Includes 10 models of NEEDLE-TH with associated datasets. 
+- **Lasair Version**: Requires an API token, which can be obtained by contacting the Lasair team. A Lasair version of the well-trained model (without dataset) will be released soon.
 - **Config.py**: A configuration file for inputting file paths.
+- **Makefile**: A Makefile to re-train the model with randomly shuffled test sets.
 
 ## Dataset
 
-The dataset is in HDF5 format and is accessible via [this link on Kaggle](https://www.kaggle.com/datasets/sherrysheng97/needle-lasair-dataset).
-
+The dataset is in HDF5 format and is accessible via [this link on Kaggle](https://www.kaggle.com/datasets/sherrysheng97/needle-lasair-dataset). Download `data.hdf5` and `hash_table.json` and put them into the folder 'needle_th_models'.
+```sh
+   kaggle datasets download -d sherrysheng97/needle-lasair-dataset
+```
 ## Contact Information
 
 For any questions or comments, you can contact Xinyue Sheng at Xsheng03@qub.ac.uk.
@@ -32,16 +35,15 @@ For any questions or comments, you can contact Xinyue Sheng at Xsheng03@qub.ac.u
 
 To begin using the NEEDLE classifier, follow these steps:
 
-1. **Download the Dataset**: Download the HDF5 dataset from Kaggle using the provided link.
-2. **Set Up Config.py**: Edit the `Config.py` file to include the file paths for your data and models.
-3. **Re-train Models**: If desired, use the provided dataset to re-train the models on your local machine.
+1. **Download the Dataset**: Download the HDF5 dataset.
+2. **Set Virtual Environment**: Set a conda envrionment, and use `requirements.txt` to download all needed packages.
+2. **Set Up Config.py**: Edit the `Config.py` file to include the file paths for your data and models. Note the data for IMAGE_PATH, MAG_PATH, HOST_PATH are not given, please contact the author if desired.
+3. **Re-train Models**: If desired, use the provided dataset to re-train the models on your local machine. Simply use Makefile to train 10 new models.
+```sh
+   Make
+```
 4. **Request API Token**: For using the Lasair version, request an API token from the Lasair team.
 
-### Example Steps
-
-1. **Download the Dataset**:
-   ```sh
-   kaggle datasets download -d sherrysheng97/needle-lasair-dataset
 
 ## References
 
