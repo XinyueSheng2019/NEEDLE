@@ -19,7 +19,9 @@ from ztf_image_pipeline import collect_image
 from sherlock_host_pipeline import get_potential_host
 from host_meta_pipeline import PS1catalog_host
 from obj_meta_pipeline import collect_meta
-import config
+import sys
+sys.path.append('../')
+import config as config
 
 def build_and_train_models(band, image_path, host_path, mag_path, output_path, label_path, quality_model_path,
                             no_diff=True, only_complete=True, add_host=False, neurons=[[128, 5], [128, 5]], 
@@ -49,7 +51,7 @@ def build_and_train_models(band, image_path, host_path, mag_path, output_path, l
     print(train_imageset.shape, train_metaset.shape)
 
     train(train_imageset, train_metaset, train_labels, test_imageset, test_metaset, test_labels, label_dict["label"],
-          neurons=neurons, res_cnn_group=res_cnn_group, batch_size=batch_size, epoch=epoch,
+          neurons=neurons, batch_size=batch_size, epochs=epoch,
           learning_rate=learning_rate, model_name=model_path)
 
 def add_single_transient(ztf_id, disdate, transient_type, size, duration, outdir, magdir, hostdir):
