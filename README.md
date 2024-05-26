@@ -14,10 +14,10 @@ The NEEDLE classifier is a specialized tool designed for identifying rare astron
 
 
 ## Key Features
-- **Architecture**: ![Description of Figure]('cnn_model.pdf')
+- **Architecture**: ![Description of Figure]('cnn_model.png')
 - **Open Source**: The dataset `data.hdf5` is available for re-training the models.
 - **Lasair Version**: Requires an API token, which can be obtained by contacting the Lasair team.
-- **Well-trained Models**: Includes three models—NEEDLE-T and NEEDLT-TH—with associated datasets and a Lasair version of the well-trained model (without dataset).
+- **Well-trained Models**: Includes 10 models of NEEDLE-TH with associated datasets. A Lasair version of the well-trained model (without dataset) will be released soon.
 - **Config.py**: A configuration file for inputting file paths.
 
 ## Dataset
@@ -42,3 +42,7 @@ To begin using the NEEDLE classifier, follow these steps:
 1. **Download the Dataset**:
    ```sh
    kaggle datasets download -d sherrysheng97/needle-lasair-dataset
+
+## References
+
+Sheng, X., Nicholl, M., Smith, K. W., Young, D. R., Williams, R. D., Stevance, H. F., Smartt, S. J., Srivastav, S., & Moore, T. (2023). *NEural Engine for Discovering Luminous Events (NEEDLE): identifying rare transient candidates in real time from host galaxy images*. arXiv preprint arXiv:2312.04968. [https://arxiv.org/abs/2312.04968](https://arxiv.org/abs/2312.04968)
