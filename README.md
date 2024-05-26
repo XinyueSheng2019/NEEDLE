@@ -14,7 +14,8 @@ The NEEDLE classifier is a specialized tool designed for identifying rare astron
 
 
 ## Key Features
-- **Architecture**: ![NEEDLE model](cnn_model.png)
+- **Architecture**: ![NEEDLE model](cnn_model.png) 
+* This is a demo architecture, might be mended in practice.
 - **Open Source**: The dataset is available for re-training the models.
 - **Well-trained Models**: Includes 10 models of NEEDLE-TH with associated datasets. 
 - **Lasair Version**: Requires an API token, which can be obtained by contacting the Lasair team. A Lasair version of the well-trained model (without dataset) will be released soon.
