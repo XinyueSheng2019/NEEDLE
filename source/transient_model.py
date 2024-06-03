@@ -49,7 +49,7 @@ class TransientClassifier(tf.keras.Model):
         super(TransientClassifier, self).__init__(**kwargs)
         
         if neurons is None:
-            neurons = [[128, 2], [128, 2]]
+            neurons = [[64, 5], [128, 3]]
         
         self.N_image = N_image
         self.dimension = dimension
@@ -67,20 +67,11 @@ class TransientClassifier(tf.keras.Model):
 
         # Image input and CNN layers
         self.image_input = layers.Input(shape=(N_image, N_image, dimension), name='image_input')
-        conv2d_1 = layers.Conv2D(neurons[0][0], 3, activation='relu', name='conv_1')
-        pooling_1 = layers.MaxPooling2D((self.neurons[0][1],self.neurons[0][1]))
-        conv2d_2 = layers.Conv2D(neurons[1][0], 3, activation='relu', name='conv_2')
-        pooling_2 = layers.MaxPooling2D((self.neurons[1][1],self.neurons[1][1]))
-        self.cnn_layers.append([conv2d_1, pooling_1])
-        self.cnn_layers.append([conv2d_2, pooling_2])
+        for i in np.arange(len(neurons)):
+            self.cnn_layers.append([layers.Conv2D(neurons[i][0], 3, activation='relu', name=f'conv_{i}'), layers.MaxPooling2D((self.neurons[i][1],self.neurons[i][1]), name = f'pool_{i}')])
+
         if Resnet_op:
             self.res_block = ResNetBlock(ks=ks, filters=res_cnn_group, stage=1, s=1)
-        else:
-            
-            for cy in neurons[1:]:
-                conv2d = layers.Conv2D(cy[0], 3, activation='relu', name='conv_3')
-                pooling = layers.MaxPooling2D(cy[1], cy[1])
-                self.cnn_layers.append((conv2d, pooling))
 
         self.flatten = layers.Flatten()
 
