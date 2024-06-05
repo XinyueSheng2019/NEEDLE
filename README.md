@@ -54,4 +54,4 @@ To begin using the NEEDLE classifier, follow these steps:
 
 ## References
 
-Sheng, X., Nicholl, M., Smith, K. W., Young, D. R., Williams, R. D., Stevance, H. F., Smartt, S. J., Srivastav, S., & Moore, T. (2023). *NEural Engine for Discovering Luminous Events (NEEDLE): identifying rare transient candidates in real time from host galaxy images*. arXiv preprint arXiv:2312.04968. [https://arxiv.org/abs/2312.04968](https://arxiv.org/abs/2312.04968)
+Xinyue Sheng, Matt Nicholl, Ken W Smith, David R Young, Roy D Williams, Heloise F Stevance, Stephen J Smartt, Shubham Srivastav, Thomas Moore, *NEural Engine for Discovering Luminous Events (NEEDLE): identifying rare transient candidates in real time from host galaxy images*, Monthly Notices of the Royal Astronomical Society, Volume 531, Issue 2, June 2024, Pages 2474–2492, [https://doi.org/10.1093/mnras/stae1253](https://doi.org/10.1093/mnras/stae1253)
