@@ -16,10 +16,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime
 from tensorflow.keras import layers, backend as K
+from tensorflow.keras.layers import Layer
 from custom_layers import ResNetBlock, DataAugmentation
 from sklearn.metrics import confusion_matrix
 import seaborn as sns
 from tensorflow.keras import models
+import wandb
+
 
 class EM_QualityClassifier():
     def __init__(self, model_path, iter = 5):
@@ -35,6 +38,19 @@ class EM_QualityClassifier():
         result = np.mean(results, axis = 0)
         return result >= threshold
     
+class FeatureWeightedLayer(Layer):
+    def __init__(self, feature_weights, **kwargs):
+        super(FeatureWeightedLayer, self).__init__(**kwargs)
+        self.feature_weights = np.array(feature_weights)
+
+    def build(self, input_shape):
+        self.kernel = self.add_weight(name='kernel',
+                                      shape=(input_shape[-1],),
+                                      initializer='uniform',
+                                      trainable=True)
+
+    def call(self, inputs):
+        return inputs * self.feature_weights
 
 
 class TransientClassifier(tf.keras.Model):
@@ -44,15 +60,15 @@ class TransientClassifier(tf.keras.Model):
     Metadata are also added.
     """
 
-    def __init__(self, label_dict, N_image, dimension, meta_dimension=11, ks=16, neurons=None, 
-                 res_cnn_group=None, Resnet_op=False, meta_only=False, **kwargs):
+    def __init__(self, label_dict, N_image, image_dimension, meta_dimension, ks=16, neurons=None, 
+                 res_cnn_group=None, Resnet_op=False, meta_only=False, feature_importance = np.array,  **kwargs):
         super(TransientClassifier, self).__init__(**kwargs)
         
         if neurons is None:
             neurons = [[64, 5], [128, 3]]
         
         self.N_image = N_image
-        self.dimension = dimension
+        self.image_dimension = image_dimension
         self.meta_dimension = meta_dimension
         self.ks = ks
         self.neurons = neurons
@@ -61,12 +77,13 @@ class TransientClassifier(tf.keras.Model):
         self.Resnet_op = Resnet_op
         self.meta_only = meta_only
         self.cnn_layers = []
+        self.feature_importance = feature_importance
 
         # Data Augmentation Layer
         self.data_augmentation = DataAugmentation()
 
         # Image input and CNN layers
-        self.image_input = layers.Input(shape=(N_image, N_image, dimension), name='image_input')
+        self.image_input = layers.Input(shape=(N_image, N_image, self.image_dimension), name='image_input')
         for i in np.arange(len(neurons)):
             self.cnn_layers.append([layers.Conv2D(neurons[i][0], 3, activation='relu', name=f'conv_{i}'), layers.MaxPooling2D((self.neurons[i][1],self.neurons[i][1]), name = f'pool_{i}')])
 
@@ -77,6 +94,8 @@ class TransientClassifier(tf.keras.Model):
 
         # Metadata input and dense layers
         self.meta_input = layers.Input(shape=(meta_dimension), name='meta_input')
+        if self.feature_importance is not None:
+            self.meta_weighted = FeatureWeightedLayer(self.feature_importance, name = 'feature_ranking')
         self.dense_m1 = layers.Dense(128, activation='relu', name='dense_me1')
         self.dense_m2 = layers.Dense(128, activation='relu', name='dense_me2')
 
@@ -98,30 +117,46 @@ class TransientClassifier(tf.keras.Model):
                     x = pooling(x)
 
             x = self.flatten(x)
-            y = self.dense_m1(inputs['meta_input'])
+            if self.feature_importance is not None:
+                y = self.meta_weighted(inputs['meta_input'])
+                y = self.dense_m1(y)
+            else:
+                y = self.dense_m1(inputs['meta_input'])
             y = self.dense_m2(y)
             z = self.concatenate([x, y])
             z = self.dense_c1(z)
             z = self.dense_c2(z)
             return self.output_layer(z)
         else:
-            y = self.dense_m1(inputs['meta_input'])
+            y = self.meta_weighted(inputs['meta_input'])
+            y = self.dense_m1(y)
             y = self.dense_m2(y)
             z = self.dense_c1(y)
             z = self.dense_c2(z)
             return self.output_layer(z)
 
+    def get_config(self):
+            config = super(TransientClassifier, self).get_config()
+            return config
     def plot_CM(self, test_images, test_meta, test_labels, save_path, suffix=''):
         
         predictions = self.predict({'image_input': test_images, 'meta_input': test_meta}, batch_size=1)
         y_pred = np.argmax(predictions, axis=-1)
         y_true = test_labels.flatten()
+
+        labels = self.label_dict.keys()
+        class_names = list(labels)
+
+        wandb.log({"conf_mat" : wandb.plot.confusion_matrix(probs=None,
+                        y_true=y_true, preds=y_pred,
+                        class_names=class_names)})
+
+
         cm = confusion_matrix(y_true, y_pred)
 
         p_cm = np.round(cm / np.sum(cm, axis=1, keepdims=True), 3)
 
-        labels = self.label_dict.keys()
-        class_names = labels
+        
 
         fig, ax = plt.subplots(figsize=(16, 14))
         sns.heatmap(p_cm, annot=True, ax=ax, fmt='g', annot_kws={"size": 20})

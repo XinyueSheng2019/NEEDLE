@@ -12,6 +12,17 @@ The NEEDLE classifier is a specialized tool designed for identifying rare astron
 ![GitHub forks](https://img.shields.io/github/forks/XinyueSheng2019/NEEDLE.svg)
 ![GitHub stars](https://img.shields.io/github/stars/XinyueSheng2019/NEEDLE.svg)
 
+## Update V1.1.0
+
+1. Combine g and r band information as metadata. We check the correlation among features and create new features and remove highly correlated ones. Extreme Gradient Boosting algorithm’s feature information gain ranking is applied to the Weighted Feature Layer before fully-connected layers (DNN), in order to give more weights to important features. In this way, the purity of TDE has been rising from 21% to 32%. SLSN rises from 20% to 24%.
+
+2. Record first prediction MJD to the annotation key ‘explanation’ if the object is predicted as SLSN or TDE, if this object has been alerted multiple times, always give the first MJD that predicts as an outlier on the annotation page.
+
+3. For each object, each time prediction, the results are stored in a JSON file.
+
+4. For each object, with and without a host, we use needle-mix and needle-r two versions of models (averaged by 5 models for each version) to give predictions, and weight the results by 6 (mixed) :4 (r). The reason is needle-r has better completeness of SLSN compared with needle-mix, but we could change it later.
+
+5. Apply the discovery date in the forced-photometry if the information is given.
 
 ## Key Features
 - **Architecture**: ![NEEDLE model](cnn_model.png) 

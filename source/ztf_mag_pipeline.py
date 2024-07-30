@@ -1,35 +1,58 @@
+#! /usr/bin/env python
+
+# from logging import raiseExceptions
+
 import os
 import json
 import lasair
 
 
-token = 'XXXXXXXXXXXX'
+token = 'f7b4b64c53168512a4bcba06827c6c0015e9c9f6'
 
 def get_json(ztf_id, path):
-    # Construct the save path for the JSON file
-    save_path = os.path.join(path, f"{ztf_id}.json")
+	save_path = path + '/' + str(ztf_id) + '.json'
+	if not os.path.exists(save_path):
+		L = lasair.lasair_client(token)
+		c = L.objects([ztf_id])[0]
 
-    # Check if JSON file already exists
-    if not os.path.exists(save_path):
-        # Initialize Lasair client with token
-        L = lasair.lasair_client(token)
+		# try: # remove non-detections
+		# 	temp_list = []
+		# 	for cd in c['candidates']:
+		# 		if 'candid' in cd.keys():
+		# 			temp_list.append(cd)
+		# 	c['candidates'] = temp_list
+		# except:
+		# 	pass
+		
+		json_object = json.dumps(c, indent=4)
+		outfile = open(save_path, "w") # Writing to sample.json
+		outfile.write(json_object)	
+		outfile.close()
+	else:
+		f = open(save_path)
+		c = json.load(f)
+		f.close()
 
-        # Fetch data for the given ZTF ID
-        c = L.objects([ztf_id])[0]
+	return c
 
-        try:
-            # Remove non-detections
-            temp_list = [cd for cd in c['candidates'] if 'candid' in cd.keys()]
-            c['candidates'] = temp_list
-        except Exception as e:
-            print(f"Error processing ZTF ID {ztf_id}: {e}")
+# if __name__ == '__main__':
 
-        # Convert data to JSON format
-        json_object = json.dumps(c, indent=4)
 
-        # Save JSON data to file
-        with open(save_path, "w") as outfile:
-            outfile.write(json_object)
-    else:
-        print(f"JSON file already exists for ZTF ID {ztf_id}")
+# 	image_path = '/Users/xinyuesheng/Documents/astro_projects/data/image_sets_v3'
+# 	img_files = os.listdir(image_path)
+# 	img_files.remove('.DS_Store')
+# 	img_files.remove('readme.md')
+	
+# 	path = '/Users/xinyuesheng/Documents/astro_projects/data/mag_sets_v4'
+# 	if not os.path.exists(path):
+# 		os.makedirs(path)
+# 	for obj in img_files:
+# 		print(obj)
+# 		get_json(obj, path)
+	
+
+
+
+
+# https://lasair-ztf.lsst.ac.uk/api/objects/?objectIds=ZTF22aadghqe&token=f7b4b64c53168512a4bcba06827c6c0015e9c9f6&format=json
 

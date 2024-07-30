@@ -1,17 +1,27 @@
+
+import pandas as pd
+import numpy as np
+import json
 import os
 import re
-import json
-import numpy as np
-import pandas as pd
-import h5py
-from multiprocessing import Process, Manager, Value
-from astropy.io import fits
-from astropy.wcs import WCS
-from astropy.nddata import Cutout2D
-from astropy import visualization, stats
+
+from logging import raiseExceptions
 import absl.logging
 absl.logging.set_verbosity(absl.logging.ERROR)
+
+import tensorflow as tf
 from tensorflow.keras import models
+import astropy
+from astropy.io import fits
+from astropy import visualization
+from astropy.nddata import Cutout2D
+from astropy.wcs.wcs import WCS
+
+from multiprocessing import Process, Manager, Value
+import h5py
+
+### check bad images ###
+bad_image_list = []
 
 # Regular expressions for different types of images
 OBJ_RE = re.compile('ZTF')
@@ -25,11 +35,13 @@ def check_shape(img):
     """
     return img.shape == (60, 60) and not np.all(np.isnan(img))
 
-def check_quality(model, img, threshold=0.5):
+def check_quality(model, img, threshold = 0.5):
     """
     Check if the image is good quality based on the model's prediction.
     """
-    return model.predict(img, threshold)
+    img = img.reshape(1,60,60,1)
+    result = model.predict(img)[0][1]
+    return True if result >= threshold else False
 
 def cutout_img(data, header, ra, dec, size=60):
     """
@@ -50,11 +62,12 @@ def get_shaped_image_simple(img, size=60, tolerance=2):
 
     for i in range(2):
         if size - img.shape[i] <= tolerance and size - img.shape[i] > 0:
-            _, median, _ = stats.sigma_clipped_stats(img, mask=None, mask_value=0.0, sigma=3.0)
+            _, median, _ = astropy.stats.sigma_clipped_stats(img, mask=None, mask_value=0.0, sigma=3.0)
             while img.shape[i] < size:
                 filler = np.repeat(median, size).reshape(1, size) if i == 0 else np.repeat(median, size).reshape(size, 1)
                 img = np.append(img, filler, axis=i)
     return img
+
 
 def get_shaped_image(filename, ra, dec):
     """
@@ -95,7 +108,7 @@ def save_to_h5py(dataset, metaset, labels, idx_set, filepath):
         print(f"Error saving to HDF5 file {filepath}: {e}")
 
 
-def add_obj_meta(obj, obj_path, filefracday, add_host=False, recent_values=False):
+def add_obj_meta(obj, obj_path, filefracday, add_host = False, recent_values = False, add_ext = False, band = 'r'):
     """
     Add object metadata from a CSV file for a specific object and filefracday.
 
@@ -109,18 +122,32 @@ def add_obj_meta(obj, obj_path, filefracday, add_host=False, recent_values=False
     Returns:
     - list, metadata for the object or None if not found
     """
-    meta = pd.read_csv(f"{obj_path}/{obj}/obj_meta4ML.csv")
+    if add_ext:
+        meta = pd.read_csv(f"{obj_path}/{obj}/obj_meta4ML_ext.csv")
+    else:
+        meta = pd.read_csv(f"{obj_path}/{obj}/obj_meta4ML.csv")
+
+    # print('test, ', meta)
     d_row = meta.loc[meta.filefracday == int(filefracday)].fillna(0)
+ 
     if d_row.empty:
         print(f"{obj} {filefracday} NOT FOUND.\n")
         return None
-
-    new_row = [
-        d_row['candi_mag'].values[0],
-        d_row['disc_mag'].values[0],
-        d_row['delta_mag_discovery'].values[0],
-        d_row['delta_t_discovery'].values[0]
-    ]
+    if band == 'mix':
+        new_row = [
+            d_row['candi_mag'].values[0],
+            d_row['disc_mag'].values[0],
+            d_row['delta_mag_discovery'].values[0],
+            d_row['delta_t_discovery_band'].values[0],
+            d_row['delta_t_discovery'].values[0]
+        ]
+    else: # if r band, ignore the delta_t_discovery_band as it's not accurate. only calcuate it for the disc_ratio.
+        new_row = [
+            d_row['candi_mag'].values[0],
+            d_row['disc_mag'].values[0],
+            d_row['delta_mag_discovery'].values[0],
+            d_row['delta_t_discovery'].values[0]
+        ]
 
     if recent_values:
         new_row += [
@@ -132,7 +159,7 @@ def add_obj_meta(obj, obj_path, filefracday, add_host=False, recent_values=False
         d_row['delta_mag_recent'].values[0],
         d_row['delta_t_recent'].values[0],
         d_row['delta_mag_discovery'].values[0],
-        d_row['delta_t_discovery'].values[0]
+        d_row['delta_t_discovery_band'].values[0]
     )
 
     new_row += [ratio_recent, ratio_disc]
@@ -164,6 +191,9 @@ def get_ratio(delta_mag_recent, delta_t_recent, delta_mag_disc, delta_t_disc):
         if delta_t_disc == 0.0 or delta_t_recent == 0.0:
             return 0.0, 0.0
         return delta_mag_recent / delta_t_recent, delta_mag_disc / delta_t_disc
+
+
+
 
 def add_host_meta(obj, host_path, only_complete=True):
     """
@@ -225,7 +255,7 @@ def zscale(img, log_img=False):
     - ndarray, normalized image
     """
     vmin = visualization.ZScaleInterval().get_limits(img)[0]
-    _, median, _ = stats.sigma_clipped_stats(img, mask=None, sigma=3.0, cenfunc='median')
+    _, median, _ = astropy.stats.sigma_clipped_stats(img, mask=None, sigma=3.0, cenfunc='median')
     img = np.nan_to_num(img, nan=median)
     return np.log(img) if log_img else img
 
@@ -241,7 +271,6 @@ def image_normal(img):
     """
     return (img - np.min(img)) / (np.max(img) - np.min(img))
 
-
 def img_reshape(img):
     """
     Reshape the image to add a single channel.
@@ -253,6 +282,7 @@ def img_reshape(img):
     - ndarray, reshaped image
     """
     return img.reshape(img.shape[0], img.shape[1], 1)
+
 
 
 def get_obs_image(obj_path, filefracday, no_diff, band, BClassifier):
@@ -295,11 +325,8 @@ def get_obs_image(obj_path, filefracday, no_diff, band, BClassifier):
     ref_imgs = list(filter(ref_re.match, band_listdir))
     ref_img = check_refs(ref_imgs)
 
-
     sci_data = get_shaped_image_simple(fits.getdata(f"{obj_path}/{band}/{filefracday}/{sci_img}"))
-    diff_data = get_shaped_image_simple(fits.getdata(f"{obj_path}/{band}/{filefracday}/{diff_img}"))
     ref_data = get_shaped_image_simple(fits.getdata(f"{obj_path}/{band}/{ref_img}"))
-
     if no_diff:
         if check_shape(sci_data) and check_shape(ref_data):
             sci_data = img_reshape(image_normal(zscale(sci_data)))
@@ -307,6 +334,7 @@ def get_obs_image(obj_path, filefracday, no_diff, band, BClassifier):
             if check_quality(BClassifier, sci_data) and check_quality(BClassifier, ref_data):
                 return np.concatenate((sci_data, ref_data), axis=-1)
     else:
+        diff_data = get_shaped_image_simple(fits.getdata(f"{obj_path}/{band}/{filefracday}/{diff_img}"))
         if check_shape(sci_data) and check_shape(diff_data) and check_shape(ref_data):
             sci_data = img_reshape(image_normal(zscale(sci_data)))
             ref_data = img_reshape(image_normal(zscale(ref_data)))
@@ -315,6 +343,7 @@ def get_obs_image(obj_path, filefracday, no_diff, band, BClassifier):
                 comb_data = np.concatenate((sci_data, ref_data, diff_data), axis=-1)
                 return comb_data
     return None
+
 
 def get_single_transient_peak(ztf_id, image_path, host_path, band='r', no_diff=True, BClassifier=None):
     """
@@ -372,7 +401,6 @@ def get_single_transient_peak(ztf_id, image_path, host_path, band='r', no_diff=T
 
     return np.array(comb_data), np.array(meta_data)
 
-
 def multi_worker_task(obj, f, image_path, host_path, mag_path, BClassifier, label_dict, mp_meta_set, mp_image_set, mp_label_set, mp_hash_table, mp_idx_set, mp_idx):
     """
     Process images and metadata for an object in a multiprocessing environment.
@@ -425,7 +453,6 @@ def multi_worker_task(obj, f, image_path, host_path, mag_path, BClassifier, labe
             mp_hash_table[mp_idx.value] = {'ztf_id': obj, 'ffd': ffd, 'type': meta['label'], 'label': label_dict[meta['label']]}
             mp_idx_set.append(mp_idx.value)
             mp_idx.value += 1
-
 
 def serial_worker_task(obj, f, image_path, host_path, mag_path, BClassifier, label_dict):
     """
@@ -485,39 +512,31 @@ def serial_worker_task(obj, f, image_path, host_path, mag_path, BClassifier, lab
 
 
 
-def single_band_all_db(image_path, host_path, mag_path, output_path, label_dict, band='r', no_diff=True, only_complete=True, BClassifier=None, parallel=False):
-    """
-    Process all observations for each transient and treat each as a sample.
 
-    Parameters:
-    - image_path: str, path to the image data
-    - host_path: str, path to the host data
-    - mag_path: str, path to the magnitude data
-    - output_path: str, path to save the output data
-    - label_dict: dict, dictionary mapping labels
-    - band: str, filter band ('r' or 'g')
-    - no_diff: bool, whether to include difference images
-    - only_complete: bool, whether to only include complete data
-    - BClassifier: model, quality classifier
-    - parallel: bool, whether to use parallel processing
+def single_band_all_db(image_path, host_path, mag_path, output_path, label_dict, band = 'r', no_diff = True, only_complete = True,  BClassifier = None, parallel = False):
+    '''
+    get all observations for each transient, and treat each of them as a sample.
+    '''
 
-    Returns:
-    - None
-    """
-    file_names = list(filter(OBJ_RE.match, os.listdir(image_path)))
+    file_names = os.listdir(image_path) 
+    file_names = list(filter(OBJ_RE.match, file_names))
 
+    # sherlock_table = pd.read_csv(mag_path)
+    
     image_set = []
     meta_set = []
     label_set = []
     idx_set = []
     hash_table = {}
 
-    band_map = {'r': '2', 'g': '1'}
-    if band not in band_map:
-        raise ValueError('Invalid band! Choose "r" or "g".')
-    f = band_map[band]
+    if band == 'r':
+        f = '2'
+    elif band == 'g':
+        f = '1'
+    else:
+        raise Exception('WARNING: unvalid band!')
 
-    if parallel:
+    if parallel is True:
         manager = Manager()
         mp_image_set = manager.list()
         mp_meta_set = manager.list()
@@ -526,40 +545,56 @@ def single_band_all_db(image_path, host_path, mag_path, output_path, label_dict,
         mp_hash_table = manager.dict()
         mp_idx = Value('i', 0)
 
-        processes = []
-        for obj in file_names:
-            p = Process(target=multi_worker_task, args=(
-                obj, f, image_path, host_path, mag_path, BClassifier, label_dict,
-                mp_meta_set, mp_image_set, mp_label_set, mp_hash_table, mp_idx_set, mp_idx))
-            processes.append(p)
-            p.start()
-        
-        for p in processes:
-            p.join()
-
-        image_set = list(mp_image_set)
-        meta_set = list(mp_meta_set)
-        label_set = list(mp_label_set)
-        idx_set = list(mp_idx_set)
-        hash_table.update(mp_hash_table)
-    else:
         n = 0
+        p = []
         for obj in file_names:
-            obj_images, obj_metas, obj_labels, obj_hashs = serial_worker_task(
-                obj, f, image_path, host_path, mag_path, BClassifier, label_dict)
-            if obj_images:
-                image_set.extend(obj_images)
-                meta_set.extend(obj_metas)
-                label_set.extend(obj_labels)
-                for x, y in zip(range(n, n + len(obj_images)), obj_hashs):
+            p.append(Process(target=multi_worker_task, args = (obj, f, image_path, host_path, mag_path, BClassifier, label_dict, mp_meta_set, mp_image_set, mp_label_set, mp_hash_table, mp_idx_set, mp_idx)))
+            p[n].start()
+            p[n].join()
+            n += 1
+        
+        image_set += mp_image_set
+        meta_set += mp_meta_set
+        label_set += mp_label_set
+        idx_set += mp_idx_set
+        hash_table = {**hash_table, **mp_hash_table}
+    else:
+        image_set = []
+        meta_set = []
+        label_set = []
+        idx_set = []
+        hash_table = {}
+
+        n = 0
+
+        for obj in file_names:
+            obj_images, obj_metas, obj_labels, obj_hashs = serial_worker_task(obj, f, image_path, host_path, mag_path, BClassifier, label_dict)
+            if len(obj_images)>=1:
+                image_set += obj_images
+                meta_set += obj_metas
+                label_set += obj_labels
+                for x, y in zip(np.arange(n, n + len(obj_images), dtype=int), obj_hashs):
                     hash_table[str(x)] = y
                     idx_set.append(x)
                 n += len(obj_images)
 
-    save_to_h5py(np.array(image_set), np.array(meta_set), np.array(label_set), np.array(idx_set), os.path.join(output_path, 'data.hdf5'))
-    with open(os.path.join(output_path, "hash_table.json"), "w") as outfile:
-        json.dump(hash_table, outfile, indent=4)
-  
+
+    
+    # dataset, metaset, labels, idx_set, filepath
+    save_to_h5py(np.array(image_set), np.array(meta_set), np.array(label_set), np.array(idx_set), output_path + 'data.hdf5')
+    with open(output_path + "hash_table.json", "w") as outfile:
+        json.dump(hash_table, outfile, indent = 4)
+
+
+def remove_non_detection(mag_with_img = dict):
+    for i in ['f1', 'f2', 'f3']:
+        clean_candid = []
+        for c in mag_with_img['candidates_with_image'][i]:
+            if 'candid' in c.keys():
+                clean_candid.append(c)
+        mag_with_img['candidates_with_image'][i] = clean_candid
+
+    return mag_with_img
 
 def single_band_peak_db(image_path, host_path, mag_path, output_path, label_dict, band='r', no_diff=True, only_complete=True, add_host=False, BClassifier=None):
     '''
@@ -606,6 +641,7 @@ def single_band_peak_db(image_path, host_path, mag_path, output_path, label_dict
         with open(os.path.join(obj_path, 'image_meta.json'), 'r') as mj:
             meta = json.load(mj)
         
+        mag_wg = remove_non_detection(mag_with_img = mag_wg)
         candids = mag_wg["candidates_with_image"][f'f{f}']
 
         if not candids or meta[f'f{f}']["obj_with_no_ref"]:
@@ -619,7 +655,7 @@ def single_band_peak_db(image_path, host_path, mag_path, output_path, label_dict
         if filefracday not in meta[f'f{f}']["obs_with_no_diff"]:
             comb_data = get_obs_image(obj_path, filefracday, no_diff, f, BClassifier)
             if comb_data is not None:
-                obj_meta = add_obj_meta(obj, image_path, filefracday, add_host, recent_values=False)
+                obj_meta = add_obj_meta(obj, image_path, filefracday, add_host, recent_values=False, add_ext=True, band=band)
                 if not add_host:
                     meta_set.append(obj_meta)
                     image_set.append(comb_data)
@@ -642,6 +678,8 @@ def single_band_peak_db(image_path, host_path, mag_path, output_path, label_dict
     save_to_h5py(np.array(image_set), np.array(meta_set), np.array(label_set), np.array(idx_set), os.path.join(output_path, 'data.hdf5'))
     with open(os.path.join(output_path, "hash_table.json"), "w") as outfile:
         json.dump(hash_table, outfile, indent=4)
+
+
 
 
 def both_band_peak_db(image_path, host_path, mag_path, output_path, label_dict, no_diff=True, add_host=False, only_complete=True, BClassifier=None):
@@ -733,27 +771,153 @@ def both_band_peak_db(image_path, host_path, mag_path, output_path, label_dict, 
         json.dump(hash_table, outfile, indent=4)
 
 
-def test_file():
+
+
+def mixed_band_peak_db(image_path, host_path, mag_path, output_path, label_dict, no_diff = True, add_host = False, only_complete = True, BClassifier = None):
     '''
-    test all functions in this file
+    This function choose the latest peak detection in g or r band, and take the science and reference images as image inputs.
+    The metadata includes two parts:
+    1. peak band magnitude and others before.
+    2. peak another band magnitude (jd must earlier than the above one) and others
+    3. colour difference: g-r, and Tg - Tr, (if g and r detection dates are too separated, dt = Tg - Tr is telling the DNN that the delta t is also big.)
+    4. host information: r_host - r_peak, g_host - g_peak, others the same 
+    5. sherlock arc-separation
+    metadata preprocessing:
+    two methods together.
+
     '''
-    band = 'r'
-    image_path = '/Users/xinyuesheng/Documents/astro_projects/data/image_sets_v3'
-    host_path = '/Users/xinyuesheng/Documents/astro_projects/data/host_info_r5'
 
-    output_path = '../model_with_data/r_band/test_build_dataset/'
-    if not os.path.exists(output_path):
-        os.makedirs(output_path)
+    def find_peak_mag(candids):
+        if len(candids) >= 1:
+            mags = np.array([[m["magpsf"], m["filefracday"], m["mjd"]] for m in candids])
+            idx = np.argmin(mags[:,0])
+            peak_mjd = mags[idx][2]
+            peak_mag = mags[idx][0]
+            filefracday = mags[idx][1]
+            return float(peak_mjd), float(peak_mag), filefracday
+        else:
+            return None, None, None
 
-    label_path = '/Users/xinyuesheng/Documents/astro_projects/scripts/classifier_v2/model_labels/label_dict_equal_test.json'
-    label_dict = open(label_path,'r')
-    label_dict = json.loads(label_dict.read())
-
-    mag_path = '/Users/xinyuesheng/Documents/astro_projects/data/mag_sets_v4'
-
-    # BClassifier = models.load_model('quality_model_without_zscale')
-
-    single_band_peak_db(image_path, host_path, mag_path, output_path, label_dict["classify"], band = band, no_diff = True, only_complete = True, add_host = True,  BClassifier = BClassifier)
-
+    obj_re = re.compile('ZTF')
+  
+    file_names = os.listdir(image_path) 
+    file_names = list(filter(obj_re.match, file_names))
     
-# test_file() # PASS.
+    image_set = []
+    meta_set = []
+    label_set = []
+    idx_set = []
+    hash_table = {}
+
+    mp_idx = 0
+    
+
+    for obj in file_names:
+        obj_path = os.path.join(image_path, obj)
+        j = obj_path + '/mag_with_img.json'
+        j = open(j, 'r')
+        mag_wg = json.loads(j.read())
+
+        mj = obj_path + '/image_meta.json'
+        mj = open(mj, 'r')
+        meta = json.loads(mj.read())
+        
+        candids_g = mag_wg["candidates_with_image"]['f1']
+        candids_g = [x for x in candids_g if 'candid' in x.keys()]
+        candids_r = mag_wg["candidates_with_image"]['f2']
+        candids_r = [x for x in candids_r if 'candid' in x.keys()]
+
+        print(obj)
+        flag = False
+        flag_g = False
+        flag_r = False
+        if len(candids_r) >= 1 and len(candids_g) >= 1:
+            # if there are no detections in both band, skip
+            if meta['f1']["obj_with_no_ref"] is False or meta['f2']["obj_with_no_ref"] is False:
+                # if both bands have candids, but don't have reference images, skip. However, if g band has ref, but r band doesn't have ref but have candidates, r band detection can still be useful.
+                
+                peak_mjd_r, peak_mag_r, filefracday_r = find_peak_mag(candids_r)
+                peak_mjd_g, peak_mag_g, filefracday_g = find_peak_mag(candids_g)
+
+                if peak_mag_g is not None and peak_mag_r is not None:
+                    peak_mag_g_minus_r = peak_mag_g - peak_mag_r
+                    peak_t_g_minus_r = peak_mjd_g - peak_mjd_r
+                    # find the images from g or r band, depends on which is available
+                    try:
+                        comb_data = get_obs_image(obj_path, filefracday_r, no_diff, '2', BClassifier)
+                    except:
+                        comb_data = None
+
+                    if comb_data is None:
+                        try: 
+                            comb_data = get_obs_image(obj_path, filefracday_g, no_diff, '1', BClassifier)
+                        except:
+                            comb_data = None
+                    if comb_data is not None:
+                        obj_meta_r = add_obj_meta(obj, image_path, filefracday_r, add_host, recent_values=False, add_ext = True)
+                        obj_meta_g = add_obj_meta(obj, image_path, filefracday_g, add_host, recent_values=False, add_ext = True)
+                        flag = True
+
+                elif peak_mag_g is not None and peak_mag_r is None:
+                    flag_g = True
+  
+                elif peak_mag_r is not None and peak_mag_g is None:
+                    flag_r = True
+                    
+        elif len(candids_r) >= 1 and len(candids_g) == 0:
+            flag_r = True
+        elif len(candids_g) >= 1 and len(candids_r) == 0:
+            flag_g = True
+
+        if flag_g:
+            peak_mag_g_minus_r, peak_t_g_minus_r = 0., 0.
+            try:
+                comb_data = get_obs_image(obj_path, filefracday_g, no_diff, '1', BClassifier)
+            except:
+                comb_data = None
+            if comb_data is not None:
+                obj_meta_g = add_obj_meta(obj, image_path, filefracday_g, add_host, recent_values=False, add_ext = True)
+                obj_meta_r = [0.]*len(obj_meta_g)
+                flag = True
+        if flag_r:
+            peak_mag_g_minus_r, peak_t_g_minus_r = 0., 0.
+            try:
+                comb_data = get_obs_image(obj_path, filefracday_r, no_diff, '2', BClassifier)
+            except:
+                comb_data = None
+            if comb_data is not None:
+                    obj_meta_r = add_obj_meta(obj, image_path, filefracday_r, add_host, recent_values=False, add_ext = True)
+                    obj_meta_g = [0.]*len(obj_meta_r)
+                    flag = True
+        if flag:
+            if add_host is False:
+                meta_data = obj_meta_r + obj_meta_g + [peak_mag_g_minus_r, peak_t_g_minus_r]
+                meta_set.append(meta_data)
+                image_set.append(comb_data)
+                label_set.append(label_dict[meta['label']])
+                hash_table[mp_idx] = {'ztf_id': obj, 'type': meta['label'], 'label':label_dict[meta['label']]}
+                idx_set.append(mp_idx)
+                mp_idx += 1 
+            else:
+                host_meta = add_host_meta(obj, host_path, only_complete)
+                sher_meta = add_sherlock_info(mag_path, obj, ['separationArcsec'], only_complete)
+                if host_meta is not None and sher_meta is not None:   
+                    meta_data = obj_meta_r + obj_meta_g + [peak_mag_g_minus_r, peak_t_g_minus_r] + host_meta + sher_meta
+                    meta_set.append(meta_data)
+                    image_set.append(comb_data)
+                    label_set.append(label_dict[meta['label']])
+                    hash_table[mp_idx] = {'ztf_id': obj, 'type': meta['label'], 'label':label_dict[meta['label']]}
+                    idx_set.append(mp_idx)
+                    mp_idx += 1 
+                else:
+                    continue
+    
+    data_file = os.path.join(output_path, 'data.hdf5')
+    save_to_h5py(np.array(image_set), np.array(meta_set), np.array(label_set), np.array(idx_set), data_file)
+    hash_file = os.path.join(output_path, "hash_table.json")
+    with open(hash_file, "w") as outfile:
+        json.dump(hash_table, outfile, indent = 4)
+
+
+
+
