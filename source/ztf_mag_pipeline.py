@@ -7,7 +7,7 @@ import json
 import lasair
 
 
-token = 'f7b4b64c53168512a4bcba06827c6c0015e9c9f6'
+token = 'xxx'
 
 def get_json(ztf_id, path):
 	save_path = path + '/' + str(ztf_id) + '.json'
